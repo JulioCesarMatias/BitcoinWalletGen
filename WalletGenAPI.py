@@ -18,7 +18,7 @@ WALLET_MAX = 22538323240989823823367 # Chave do Puzzle 75
 
 # Configurações de Carteiras
 WALLETS_TO_GENERATE = 100000  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
-MAX_DATA_BASE_WALLETS = 100000 # Número máximo de carteiras por arquivo de banco de dados
+MAX_DATA_BASE_WALLETS = 500000 # Número máximo de carteiras por arquivo de banco de dados
 WALLETS_PER_CHUNK = 1000 # Número de wallets geradas em paralelo, quanto maior o valor, mais rapido. O valor aqui depende da CPU e memória ram disponíveis
 
 # Configurações da API
