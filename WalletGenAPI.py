@@ -12,12 +12,13 @@ from ecdsa import SigningKey, SECP256k1
 from Crypto.Hash import RIPEMD160
 
 # Configurações de Geração de Chaves (Puzzle 70 – 75 de https://btcpuzzle.info)
-ACTUAL_VALUE = 970436974005023690481 + (35184372088831 * 844432)
+INTERVAL = int(0.11 * 33554432) # 11% do intervalo total de 33554432 (Cada intervalo contem 35184372088831 chaves)
+ACTUAL_VALUE = 970436974005023690481 + (35184372088831 * INTERVAL)                                                                                                              
 WALLET_MIN = ACTUAL_VALUE
 WALLET_MAX = 22538323240989823823367 # Chave do Puzzle 75
 
 # Configurações de Carteiras
-WALLETS_TO_GENERATE = 100000  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
+WALLETS_TO_GENERATE = 200000  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
 MAX_DATA_BASE_WALLETS = 500000 # Número máximo de carteiras por arquivo de banco de dados
 WALLETS_PER_CHUNK = 1000 # Número de wallets geradas em paralelo, quanto maior o valor, mais rapido. O valor aqui depende da CPU e memória ram disponíveis
 
