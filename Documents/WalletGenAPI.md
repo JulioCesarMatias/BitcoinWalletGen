@@ -35,10 +35,10 @@ Clone o repositório ou salve o código em um arquivo `.py`, por exemplo: `Walle
 
 ### 2. Configuração:
 
-- WALLETS_TO_GENERATE = 1000         # Quantidade total de carteiras únicas a gerar
-- API_REQUESTS_PER_SECOND = 2        # Limite de requisições por segundo
-- WALLET_MIN                         # Chave minima a ser gerada
-- WALLET_MAX                         # Chave maxima a ser gerada
+- WALLETS_TO_GENERATE         # Quantidade total de carteiras únicas a gerar
+- API_REQUESTS_PER_SECOND     # Limite de requisições por segundo feitas na API
+- WALLET_MIN                  # Chave minima a ser gerada (Ponto de partida)
+- WALLET_MAX                  # Chave maxima a ser gerada
 
 ### 3. Execução
 
