@@ -11,14 +11,12 @@ import glob
 from ecdsa import SigningKey, SECP256k1
 from Crypto.Hash import RIPEMD160
 
-# Configurações de Geração de Chaves (Puzzle 70 – 75 de https://btcpuzzle.info)
-INTERVAL = int(0.11 * 33554432) # 11% do intervalo total de 33554432 (Cada intervalo contem 35184372088831 chaves)
-ACTUAL_VALUE = 970436974005023690481 + (35184372088831 * INTERVAL)                                                                                                              
-WALLET_MIN = ACTUAL_VALUE
-WALLET_MAX = 22538323240989823823367 # Chave do Puzzle 75
+# Configurações de Geração de Chaves (https://btcpuzzle.info)                                                                                               
+WALLET_MIN = 1180591620717411303424 + (35184372088831 * 12000000)
+WALLET_MAX = 2361183241434822606848
 
 # Configurações de Carteiras
-WALLETS_TO_GENERATE = 200000  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
+WALLETS_TO_GENERATE = 100000  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
 MAX_DATA_BASE_WALLETS = 500000 # Número máximo de carteiras por arquivo de banco de dados
 WALLETS_PER_CHUNK = 1000 # Número de wallets geradas em paralelo, quanto maior o valor, mais rapido. O valor aqui depende da CPU e memória ram disponíveis
 
@@ -248,12 +246,12 @@ async def check_balance(session, limiter, wif, address, db_filename, progress_in
                 data = await resp.json()
                 # Checa se o endereço tem balanço
                 address_balance = data['chain_stats']['funded_txo_sum'] - data['chain_stats']['spent_txo_sum']
-                # Checa se o endereço tem transações (Verificar isso retorna muito falso positivo, não recomendado)
-                #address_transactions = data['chain_stats']['tx_count']
-                if address_balance > 0:
+                # Checa se o endereço tem transações
+                address_transactions = data['chain_stats']['tx_count']
+                if address_balance != 0 or address_transactions > 0:
                     print(f"\n✔ SALDO ENCONTRADO! {address}: {address_balance / 1e8:.8f} BTC")
                     wallet_data_to_return = (wif, address, address_balance / 1e8)
-                else: # Saldo é 0 ou negativo
+                else: # Saldo é zero ou o número de transações é zero
                     loop = asyncio.get_event_loop()
                     await loop.run_in_executor(None, delete_wallet_from_db, db_filename, wif)
             else: # Outros erros HTTP

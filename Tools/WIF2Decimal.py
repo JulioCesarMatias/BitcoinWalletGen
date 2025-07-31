@@ -2,6 +2,8 @@ import base58
 import hashlib
 from ecdsa import SigningKey, SECP256k1
 
+wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3r6gP3YZUceJoiXDL3sSX"
+
 def wif_to_private_key(wif_key):
     try:
         # Decodifica usando Base58Check
@@ -53,15 +55,12 @@ def public_key_to_address(public_key_bytes):
     return address
 
 if __name__ == "__main__":
-    wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qvfXv8EhQiyjC2qiXouK"
     private_key_bytes, compressed = wif_to_private_key(wif)
     
     if private_key_bytes:
         key_int = int.from_bytes(private_key_bytes, byteorder='big')
-        print(f"WIF: {wif}")
+        public_key = private_key_to_public_key(private_key_bytes, compressed)
+        address = public_key_to_address(public_key)
         print(f"Chave privada (decimal): {key_int}")
         print(f"Chave privada (hex): {private_key_bytes.hex()}")
-        public_key = private_key_to_public_key(private_key_bytes, compressed)
-        print(f"Chave pública: {public_key.hex()}")
-        address = public_key_to_address(public_key)
-        print(f"Endereço Bitcoin: {address}")
+        print(f"Chave privada (endereço): {address}")
