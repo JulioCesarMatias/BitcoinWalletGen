@@ -2,7 +2,7 @@ import base58
 import hashlib
 from ecdsa import SigningKey, SECP256k1
 
-wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3r6gP3YZUceJoiXDL3sSX"
+wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3r6vST3eFBgom3eddLSBu"
 
 def wif_to_private_key(wif_key):
     try:

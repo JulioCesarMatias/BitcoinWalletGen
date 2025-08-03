@@ -11,13 +11,11 @@ import glob
 from ecdsa import SigningKey, SECP256k1
 from Crypto.Hash import RIPEMD160
 
-# Configurações de Geração de Chaves (https://btcpuzzle.info)                                                                                               
-WALLET_MIN = 1180591620717411303424 + (35184372088831 * 12000000)
-WALLET_MAX = 2361183241434822606848
+# Configuraçõedo inicio da geração de carteiras (baseado nos dados do site: https://btcpuzzle.info)                                                                                               
+INITIAL_WALLET = 1614966549158306225845
 
 # Configurações de Carteiras
-WALLETS_TO_GENERATE = 1  # Número total de carteiras únicas a gerar entre WALLET_MIN e WALLET_MAX nesta execução
-MAX_DATA_BASE_WALLETS = 500000 # Número máximo de carteiras por arquivo de banco de dados
+WALLETS_TO_GENERATE = 100000  # Número total de carteiras únicas a gerar
 WALLETS_PER_CHUNK = 1000 # Número de wallets geradas em paralelo, quanto maior o valor, mais rapido. O valor aqui depende da CPU e memória ram disponíveis
 
 # Configurações da API
@@ -27,6 +25,7 @@ API_REQUESTS_PER_SECOND = 14  # Requisições por segundo para a API (para evita
 NUM_WORKERS = multiprocessing.cpu_count() # Número de núcleos da CPU disponivel para usar durante a geração de carteiras
 
 # Configurações de Arquivos
+MAX_DATA_BASE_WALLETS = 500000 # Número máximo de carteiras por arquivo de banco de dados
 VALID_WALLETS_FILE = 'wallets_with_balance.csv'
 DB_FOLDER = "DataBaseAPI"
 DB_BASE_NAME = "wallets_"
@@ -233,8 +232,6 @@ def generate_wallet_from_key(private_key_int):
 
 # Verifica o saldo e exclui do banco de dados se não houver saldo no endereço.
 async def check_balance(session, limiter, wif, address, db_filename, progress_info):
-    #address = "16vmNcrA4Mvf7CaRLirAmpnjz1ZH3bWNkQ" # Wallet com balanço, apenas para teste
-    #address = "19YZECXj3SxEZMoUeJ1yiPsw8xANe7M7QR" # Wallet sem balanço, mas com transações, apenas para teste
     url = f"https://blockstream.info/api/address/{address}"
     wallet_data_to_return = None
     try:
@@ -296,7 +293,6 @@ def export_wallets_with_balance_to_csv(wallets_data, filename):
             writer.writerow(['WIF', 'Address', 'Balance_BTC'])
         for wif, address, balance in wallets_data:
             writer.writerow([wif, address, f"{balance:.8f}"])
-    #print(f"💾 Exportado {len(wallets_data)} carteiras com saldo para {filename}")
 
 def check_existing_wallets_for_balance():
     wallets_to_check = []
@@ -334,7 +330,7 @@ def main():
     check_existing_wallets_for_balance()
 
     latest_db_idx, last_saved_wif = find_latest_db_index_and_last_wif()
-    current_key_int = WALLET_MIN
+    current_key_int = INITIAL_WALLET
 
     # Ajuste para current_db_idx: se latest_db_idx é 0 (ex: wallets_0.db é o último), current_db_idx deve ser 0.
     # Se nenhum banco de dados for encontrado (latest_db_idx=0, last_saved_wif=None), então começamos com 1.
@@ -346,33 +342,19 @@ def main():
     if last_saved_wif:
         last_saved_pk_int = wif_to_private_key_int(last_saved_wif)
     
-    # Se WALLET_MIN for maior que o último WIF salvo no banco de dados, reinicie a geração de carteiras a partir de WALLET_MIN
+    # Se INITIAL_WALLET for maior que o último WIF salvo no banco de dados, reinicie a geração de carteiras a partir de INITIAL_WALLET
     if current_key_int < last_saved_pk_int:
         try:
             current_key_int = last_saved_pk_int + 1
             print(f"↪️ Retomando a partir da chave WIF: {last_saved_wif} (Decimal: {last_saved_pk_int}) no DataBase:{current_db_idx}")
         except ValueError as e:
-            print(f"⚠️ Erro ao converter WIF salvo '{last_saved_wif}': {e}. Iniciando do começo ({WALLET_MIN}).")
+            print(f"⚠️ Erro ao converter WIF salvo '{last_saved_wif}': {e}. Iniciando do começo ({INITIAL_WALLET}).")
             last_saved_wif = None
-            current_key_int = WALLET_MIN
+            current_key_int = INITIAL_WALLET
             current_db_idx = 1 # Redefinir para 1 se estiver iniciando do zero devido a um erro WIF
     else:
-        print(f"🌱 Iniciando do começo do range ({WALLET_MIN}).")
+        print(f"🌱 Iniciando do começo do range ({INITIAL_WALLET}).")
         current_db_idx = 1 # Comece com banco de dados 1 se não houver dados anteriores
-
-    if current_key_int > WALLET_MAX:
-        print("❌ Todas as chaves no range especificado já foram processadas conforme o último WIF salvo.")
-        return
-
-    effective_available_keys = WALLET_MAX - current_key_int + 1
-    if effective_available_keys <= 0:
-        print("❌ Nenhuma chave nova disponível no range a partir do offset atual.")
-        return
-        
-    if WALLETS_TO_GENERATE > effective_available_keys:
-        print(f"⚠️ Aviso: Solicitado gerar {WALLETS_TO_GENERATE} carteiras, mas apenas {effective_available_keys} estão disponíveis a partir do offset.")
-        print(f"⚠️ Gerando {effective_available_keys} carteiras.")
-        WALLETS_TO_GENERATE = effective_available_keys
     
     if WALLETS_TO_GENERATE == 0:
         print("ℹ️ Nenhuma carteira a ser gerada nesta execução.")
@@ -400,8 +382,8 @@ def main():
     PROCESSING_CHUNK_SIZE = NUM_WORKERS * WALLETS_PER_CHUNK
 
     with multiprocessing.Pool(NUM_WORKERS) as pool:
-        while wallets_generated_this_run_count < WALLETS_TO_GENERATE and current_key_int <= WALLET_MAX:
-            keys_left_in_range = WALLET_MAX - current_key_int + 1
+        while wallets_generated_this_run_count < WALLETS_TO_GENERATE:
+            keys_left_in_range = current_key_int + 1
             wallets_needed_for_target = WALLETS_TO_GENERATE - wallets_generated_this_run_count
             
             num_keys_to_process_in_chunk = min(wallets_needed_for_target, PROCESSING_CHUNK_SIZE, keys_left_in_range)
@@ -420,7 +402,7 @@ def main():
             # Verifica se o banco de dados atual está cheio ou se o lote de inserção atingiu um tamanho razoável
             # Ou se terminamos de gerar o necessário
             db_wallet_count = get_wallet_count_in_db(current_db_filename)
-            force_write = (wallets_generated_this_run_count == WALLETS_TO_GENERATE or current_key_int > WALLET_MAX)
+            force_write = (wallets_generated_this_run_count == WALLETS_TO_GENERATE)
 
             if (db_wallet_count + len(wallets_batch_for_db_insert) >= MAX_DATA_BASE_WALLETS or # Banco de dados cheio
                 force_write or # Força a escrita se atingimos o número total de carteiras a gerar
