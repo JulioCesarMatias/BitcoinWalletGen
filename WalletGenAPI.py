@@ -12,10 +12,10 @@ from ecdsa import SigningKey, SECP256k1
 from Crypto.Hash import RIPEMD160
 
 # Configuraçõedo inicio da geração de carteiras (baseado nos dados do site: https://btcpuzzle.info)                                                                                               
-INITIAL_WALLET = 1614966549158306225845
+INITIAL_WALLET = 1614966549158306325846
 
 # Configurações de Carteiras
-WALLETS_TO_GENERATE = 100000  # Número total de carteiras únicas a gerar
+WALLETS_TO_GENERATE = 1000  # Número total de carteiras únicas a gerar
 WALLETS_PER_CHUNK = 1000 # Número de wallets geradas em paralelo, quanto maior o valor, mais rapido. O valor aqui depende da CPU e memória ram disponíveis
 
 # Configurações da API
